@@ -1,6 +1,9 @@
 // A streaming speech-to-text connection. Adapters use the standard WebSocket
 // API and authenticate through the WebSocket protocols list, so the same code
-// can run in a browser later (with a short-lived key from a backend).
+// runs in Node and in the browser.
+
+/** 16 kHz: the rate audio sources deliver and speech-to-text receives. */
+export const SAMPLE_RATE = 16_000;
 
 export interface SttEvents {
   /** The current unfinished hypothesis, replacing the previous one. Display only. */

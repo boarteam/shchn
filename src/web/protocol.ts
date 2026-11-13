@@ -1,11 +1,27 @@
 import type { ClaudeConfig } from "../core/extract/claude";
+import type { SttName } from "../core/input/stt";
 import type { ReviewSettings, SessionInput } from "../core/session";
 
 // Messages between the page and the session worker (worker.ts). Plain data
-// only: they're copied between threads.
+// only: they're copied between threads, except the transferred audio port and
+// recording buffer.
 
-/** What the page can feed a session so far; the microphone comes later. */
+/** Pasted text or dropped files. */
 export type TextInput = Extract<SessionInput, { type: "documents" | "replay" }>;
+
+/** Speech: the microphone, or a recording played as if spoken. */
+export interface LiveRequest {
+  type: "live";
+  stt: SttName;
+  sttKey: string;
+  languages: string[];
+  terms: string[];
+  /** Turn the microphone off after this many seconds without speech; 0 = never. */
+  pauseAfterSeconds: number;
+  audio:
+    | { kind: "microphone"; label: string; frames: MessagePort }
+    | { kind: "recording"; name: string; pcm: ArrayBuffer };
+}
 
 export interface ModelStats {
   entities: number;
@@ -15,7 +31,7 @@ export interface ModelStats {
 
 export interface StartRequest {
   type: "start";
-  input: TextInput;
+  input: TextInput | LiveRequest;
   apiKey: string;
   claude: ClaudeConfig;
   review: ReviewSettings;
@@ -26,7 +42,11 @@ export interface StartRequest {
 export type ToWorker =
   | StartRequest
   /** Stop the input; calls already started still finish. */
-  | { type: "stop" };
+  | { type: "stop" }
+  /** The microphone is on again after a pause; frames come through `frames`. */
+  | { type: "resume"; frames: MessagePort }
+  /** The microphone went away. */
+  | { type: "microphone-lost" };
 
 export type FromWorker =
   | { type: "model"; yaml: string; stats: ModelStats }
@@ -38,5 +58,10 @@ export type FromWorker =
   | { type: "heard"; text: string }
   | { type: "info"; message: string }
   | { type: "warn"; message: string }
-  | { type: "done"; summary: string[] }
+  /** Listening stopped: turn the microphone off. */
+  | { type: "microphone-off" }
+  /** No speech for a while: the microphone is off until the user resumes. */
+  | { type: "paused"; seconds: number }
+  /** `transcript`: what was heard, for speech sessions. */
+  | { type: "done"; summary: string[]; transcript?: string }
   | { type: "failed"; message: string };

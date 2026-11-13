@@ -6,18 +6,17 @@ import type { InputKind } from "./extract/prompt";
 import { AudioClock } from "./input/audioClock";
 import { PauseDetector } from "./input/pauses";
 import { replay } from "./input/replay";
-import type { SttProvider } from "./input/stt/types";
+import { SAMPLE_RATE, type SttProvider } from "./input/stt/types";
 import type { ModelStore } from "./model/store";
 import { unref } from "./timers";
 
 // One session, the same on every platform: text or audio in, edits out, the
-// model kept up to date. The platform (the CLI, later the web app) supplies what
+// model kept up to date. The platform (the CLI or the web app) supplies what
 // differs: where text and audio come from, the Claude client and the
 // speech-to-text key, where the model and the edit log are kept, how progress is
 // shown, and how the speaker starts and stops.
 
-/** 16 kHz: the rate audio sources deliver and speech-to-text receives. */
-export const SAMPLE_RATE = 16_000;
+export { SAMPLE_RATE };
 const BYTES_PER_MS = (SAMPLE_RATE * 2) / 1000; // 16-bit mono
 
 const CODE_EXTENSIONS = new Set(

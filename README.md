@@ -60,7 +60,9 @@ Live mode with a microphone waits for Enter before it starts listening. After 20
 npm run web    # then open http://localhost:5173 in Chrome
 ```
 
-The same engine in the browser. Paste a transcript (or load one of the examples) to have it played at speaking speed, or drop requirements and code files, and watch the YAML take shape with new lines highlighted. Your Anthropic API key goes in Settings: it's kept in that browser only and sent only to api.anthropic.com, and calls go straight there with no server in between. The microphone and saved sessions come next; for now **Download YAML** saves the model.
+The same engine in the browser, built for Chrome. Talk into the microphone, play a recording as if spoken, paste a transcript (or load one of the examples) to have it played at speaking speed, or drop requirements and code files, and watch the YAML take shape with new lines highlighted.
+
+Keys go in Settings: the Anthropic one, and Soniox (or Deepgram) for speech. They're kept in that browser only, and each is sent only to its own service: audio goes straight from the browser to speech-to-text and text straight to Claude, with no server in between. Like `live` in the terminal, the microphone turns off after 20 s without speech (Settings → Auto-pause) until you press **Resume listening**, and sessions keep running in a background tab. Saved sessions come next; for now **Download YAML** and **Download transcript** keep the results.
 
 `npm run web:build` writes a static site to `dist/web`, which any static host can serve.
 
@@ -112,7 +114,7 @@ To test the full speech path without speaking, stream a recording: `./shchn live
 | `src/core/eval/` | Scoring against an expected model |
 | `src/core/session.ts` | One session from input to model, with the platform's parts passed in |
 | `src/cli/` | The command line: options, audio capture, the mic check, file writers, the WAV recorder, the terminal view |
-| `src/web/` | The web app: the page (React, CodeMirror) and the worker that runs sessions |
+| `src/web/` | The web app: the page (React, CodeMirror), the worker that runs sessions, and the audio worklet that captures the microphone |
 | `native/` | The macOS microphone helper, compiled on first use |
 | `scripts/` | `set-key.sh`, behind `npm run set-key` |
 | `shchn` | The launcher: runs a single process so Ctrl+C reaches the session (`npm run` doesn't wait) |

@@ -76,6 +76,8 @@ export class SonioxStt implements SttProvider {
 
   constructor(
     private readonly apiKey: string,
+    /** What to check when the connection fails, in the platform's words. */
+    private readonly keyHint = "Check the Soniox API key and the network.",
     private readonly model = SONIOX_MODEL,
   ) {}
 
@@ -105,7 +107,7 @@ export class SonioxStt implements SttProvider {
     };
 
     return new Promise((resolve, reject) => {
-      socket.onerror = () => reject(new Error("Couldn't connect to Soniox. Check SONIOX_API_KEY and the network."));
+      socket.onerror = () => reject(new Error(`Couldn't connect to Soniox. ${this.keyHint}`));
       socket.onopen = () => {
         socket.onerror = () => events.error(new Error("Soniox connection error"));
         socket.send(JSON.stringify(sonioxConfig(this.model, options)));

@@ -72,7 +72,11 @@ export function handleDeepgramMessage(message: DeepgramMessage, events: SttEvent
 export class DeepgramStt implements SttProvider {
   readonly name = "deepgram";
 
-  constructor(private readonly apiKey: string) {}
+  constructor(
+    private readonly apiKey: string,
+    /** What to check when the connection fails, in the platform's words. */
+    private readonly keyHint = "Check the Deepgram API key, the language codes and the network.",
+  ) {}
 
   connect(options: SttOptions, events: SttEvents): Promise<SttSession> {
     const socket = new WebSocket(deepgramUrl(options), ["token", this.apiKey]);
@@ -97,8 +101,7 @@ export class DeepgramStt implements SttProvider {
     };
 
     return new Promise((resolve, reject) => {
-      socket.onerror = () =>
-        reject(new Error("Couldn't connect to Deepgram. Check DEEPGRAM_API_KEY, the --lang codes and the network."));
+      socket.onerror = () => reject(new Error(`Couldn't connect to Deepgram. ${this.keyHint}`));
       socket.onopen = () => {
         socket.onerror = () => events.error(new Error("Deepgram connection error"));
         resolve({

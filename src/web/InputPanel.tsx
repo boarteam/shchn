@@ -1,10 +1,13 @@
 import { type DragEvent, useState } from "react";
 import shopTranscript from "../../examples/shop.en.txt?raw";
 import trackerTranscript from "../../examples/tracker.ru.txt?raw";
+import { MicrophoneTab } from "./MicrophoneTab";
 import type { TextInput } from "./protocol";
+import type { InputSource } from "./settings";
 
-// What to feed the session: a transcript played at speaking speed (as if
-// someone were saying it), or requirements and code files read at once.
+// What to feed the session: the microphone (or a recording played as if
+// spoken), a transcript played at speaking speed, or requirements and code
+// files read at once.
 
 const EXAMPLES = [
   { name: "Online shop (English)", text: shopTranscript },
@@ -17,24 +20,61 @@ interface DocumentFile {
   text: string;
 }
 
+/** What Start feeds the session. */
+export type PanelInput = TextInput | { type: "microphone" } | { type: "recording"; file: File };
+
+export interface SpeechProps {
+  /** The speech-to-text service's name, and whether its key is saved. */
+  serviceLabel: string;
+  hasServiceKey: boolean;
+  microphoneId: string;
+  onMicrophoneId(id: string): void;
+  terms: string;
+  onTerms(terms: string): void;
+  /** Seconds of silence after which the session paused, while paused. */
+  paused?: number;
+  onResume(): void;
+}
+
 interface Props {
   phase: "idle" | "running" | "stopping";
+  source: InputSource;
+  onSource(source: InputSource): void;
   hasKey: boolean;
   /** There's a model to continue from. */
   hasModel: boolean;
   wordsPerMinute: number;
   onWordsPerMinute(value: number): void;
-  onStart(input: TextInput, continueModel: boolean): void;
+  speech: SpeechProps;
+  onStart(input: PanelInput, continueModel: boolean): void;
   onStop(): void;
   onOpenSettings(): void;
 }
+
+const TABS: ReadonlyArray<{ source: InputSource; label: string }> = [
+  { source: "microphone", label: "Microphone" },
+  { source: "transcript", label: "Transcript" },
+  { source: "files", label: "Files" },
+];
 
 function kilobytes(bytes: number): string {
   return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-export function InputPanel({ phase, hasKey, hasModel, wordsPerMinute, onWordsPerMinute, onStart, onStop, onOpenSettings }: Props) {
-  const [source, setSource] = useState<"transcript" | "files">("transcript");
+export function InputPanel({
+  phase,
+  source,
+  onSource,
+  hasKey,
+  hasModel,
+  wordsPerMinute,
+  onWordsPerMinute,
+  speech,
+  onStart,
+  onStop,
+  onOpenSettings,
+}: Props) {
+  const [recording, setRecording] = useState<File | undefined>(undefined);
   const [transcript, setTranscript] = useState("");
   const [files, setFiles] = useState<DocumentFile[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -53,35 +93,71 @@ export function InputPanel({ phase, hasKey, hasModel, wordsPerMinute, onWordsPer
     void addFiles(event.dataTransfer.files);
   }
 
-  const ready = source === "transcript" ? transcript.trim().length > 0 : files.length > 0;
+  const ready =
+    source === "microphone" ? speech.hasServiceKey : source === "transcript" ? transcript.trim().length > 0 : files.length > 0;
 
   function start() {
-    const input: TextInput =
-      source === "transcript"
-        ? { type: "replay", text: transcript, wordsPerMinute }
-        : { type: "documents", files: files.map(({ name, text }) => ({ name, text })) };
+    const input: PanelInput =
+      source === "microphone"
+        ? recording
+          ? { type: "recording", file: recording }
+          : { type: "microphone" }
+        : source === "transcript"
+          ? { type: "replay", text: transcript, wordsPerMinute }
+          : { type: "documents", files: files.map(({ name, text }) => ({ name, text })) };
     onStart(input, continueModel && hasModel);
   }
+
+  const startLabel = source !== "microphone" ? "Start" : recording ? "Play recording" : "Start listening";
+  const settingsLink = (
+    <button type="button" className="link" onClick={onOpenSettings}>
+      Settings
+    </button>
+  );
+  const notReady = !hasKey ? (
+    <>Add your Anthropic API key in {settingsLink} to start.</>
+  ) : source === "microphone" ? (
+    <>
+      Add your {speech.serviceLabel} API key in {settingsLink} to listen.
+    </>
+  ) : source === "transcript" ? (
+    "Paste a transcript or load an example to start."
+  ) : (
+    "Add files to start."
+  );
 
   return (
     <section className="panel input-panel" aria-label="Input">
       <div className="tabs" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={source === "transcript"}
-          disabled={running}
-          onClick={() => setSource("transcript")}
-        >
-          Transcript
-        </button>
-        <button type="button" role="tab" aria-selected={source === "files"} disabled={running} onClick={() => setSource("files")}>
-          Files
-        </button>
+        {TABS.map((tab) => (
+          <button
+            key={tab.source}
+            type="button"
+            role="tab"
+            aria-selected={source === tab.source}
+            disabled={running}
+            onClick={() => onSource(tab.source)}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <div className="input-body">
-        {source === "transcript" ? (
+        {source === "microphone" ? (
+          <MicrophoneTab
+            running={running}
+            paused={speech.paused}
+            onResume={speech.onResume}
+            microphoneId={speech.microphoneId}
+            onMicrophoneId={speech.onMicrophoneId}
+            terms={speech.terms}
+            onTerms={speech.onTerms}
+            recording={recording}
+            onRecording={setRecording}
+            serviceLabel={speech.serviceLabel}
+          />
+        ) : source === "transcript" ? (
           <>
             <p className="hint">Paste what someone said. It's played word by word at speaking speed, as in a live session.</p>
             <textarea
@@ -180,24 +256,14 @@ export function InputPanel({ phase, hasKey, hasModel, wordsPerMinute, onWordsPer
           />
           <span>Continue from the current model</span>
         </label>
-        {!hasKey ? (
-          <p className="hint">
-            Add your Anthropic API key in{" "}
-            <button type="button" className="link" onClick={onOpenSettings}>
-              Settings
-            </button>{" "}
-            to start.
-          </p>
-        ) : !ready && !running ? (
-          <p className="hint">{source === "transcript" ? "Paste a transcript or load an example to start." : "Add files to start."}</p>
-        ) : null}
+        {!running && (!hasKey || !ready) ? <p className="hint">{notReady}</p> : null}
         {running ? (
           <button type="button" className="primary danger" onClick={onStop}>
             {phase === "stopping" ? "Stop now" : "Stop"}
           </button>
         ) : (
           <button type="button" className="primary" disabled={!ready || !hasKey} onClick={start}>
-            Start
+            {startLabel}
           </button>
         )}
       </div>

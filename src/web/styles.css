@@ -131,7 +131,8 @@ textarea {
   animation: pulse 1.4s ease-in-out infinite;
 }
 
-.phase-stopping .dot {
+.phase-stopping .dot,
+.phase-paused .dot {
   background: var(--warn);
 }
 
@@ -411,6 +412,85 @@ label.inline input {
   font-size: 12px;
 }
 
+label.stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+label.stacked > span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.meter {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  background: var(--add);
+  transform-origin: left center;
+  transition: transform 80ms linear;
+}
+
+.meter:not(.active) .meter-fill {
+  transform: scaleX(0) !important;
+}
+
+.paused {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius);
+}
+
+.paused p {
+  margin: 0;
+}
+
+.recording {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.file-row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin: 0;
+}
+
+.link-like {
+  position: relative;
+  align-self: flex-start;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.link-like input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.link-like:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .input-foot {
   display: flex;
   flex-direction: column;
@@ -600,8 +680,25 @@ dialog.settings a {
   gap: 10px;
 }
 
-.field span {
+.field > span:first-child {
   color: var(--text-muted);
+}
+
+.field-hint {
+  margin-top: -6px;
+  padding-left: 90px;
+}
+
+.inline-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.inline-field input {
+  flex: none;
+  width: 72px;
 }
 
 /* ---------------------------------------------------------------- narrow screens */

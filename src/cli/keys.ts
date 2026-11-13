@@ -9,5 +9,6 @@ export function sttProviderFromEnv(name: SttName): SttProvider {
   const variable = name === "deepgram" ? "DEEPGRAM_API_KEY" : "SONIOX_API_KEY";
   const key = process.env[variable];
   if (!key) throw new Error(`${variable} isn't set. Add it to .env (npm run set-key -- ${variable}).`);
-  return createSttProvider(name, key);
+  const hint = name === "deepgram" ? `Check ${variable}, the --lang codes and the network.` : `Check ${variable} and the network.`;
+  return createSttProvider(name, key, hint);
 }
