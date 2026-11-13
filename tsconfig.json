@@ -23,5 +23,11 @@
     "src",
     "test",
     "tools"
+  ],
+  "exclude": [
+    "src/web"
+  ],
+  "files": [
+    "src/web/vite.config.ts"
   ]
 }

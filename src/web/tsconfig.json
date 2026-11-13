@@ -1,0 +1,15 @@
+{
+  // The web app: page code (DOM, React) and the session worker, plus the shared
+  // core they import. No Node types; the Vite config is checked with the root
+  // config instead. undici-types is stubbed as in src/core/tsconfig.json.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "jsx": "react-jsx",
+    "paths": { "undici-types": ["../core/no-node-types.d.ts"] }
+  },
+  "include": ["."],
+  "exclude": ["vite.config.ts"],
+  "files": []
+}

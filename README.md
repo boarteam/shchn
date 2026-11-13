@@ -54,6 +54,16 @@ Every session writes:
 
 Live mode with a microphone waits for Enter before it starts listening. After 20 seconds without recognized speech it turns the microphone off and pauses until you press Enter again, in case someone walks away and leaves it running (`--pause-after <seconds>`, `0` turns this off). `--resume` continues from an existing `model.yaml`. `./shchn --help` lists every option.
 
+## Web version (early)
+
+```bash
+npm run web    # then open http://localhost:5173 in Chrome
+```
+
+The same engine in the browser. Paste a transcript (or load one of the examples) to have it played at speaking speed, or drop requirements and code files, and watch the YAML take shape with new lines highlighted. Your Anthropic API key goes in Settings: it's kept in that browser only and sent only to api.anthropic.com, and calls go straight there with no server in between. The microphone and saved sessions come next; for now **Download YAML** saves the model.
+
+`npm run web:build` writes a static site to `dist/web`, which any static host can serve.
+
 ## How it works
 
 ```
@@ -91,7 +101,7 @@ To test the full speech path without speaking, stream a recording: `./shchn live
 
 ## Layout
 
-`src/core/` runs anywhere: in Node, in a browser and in a Web Worker (the coming web version shares it). `src/cli/` adds everything that needs Node.
+`src/core/` runs anywhere: in Node, in a browser and in a Web Worker. `src/cli/` adds everything that needs Node, `src/web/` everything that needs a browser.
 
 | Path | What's there |
 |---|---|
@@ -102,6 +112,7 @@ To test the full speech path without speaking, stream a recording: `./shchn live
 | `src/core/eval/` | Scoring against an expected model |
 | `src/core/session.ts` | One session from input to model, with the platform's parts passed in |
 | `src/cli/` | The command line: options, audio capture, the mic check, file writers, the WAV recorder, the terminal view |
+| `src/web/` | The web app: the page (React, CodeMirror) and the worker that runs sessions |
 | `native/` | The macOS microphone helper, compiled on first use |
 | `scripts/` | `set-key.sh`, behind `npm run set-key` |
 | `shchn` | The launcher: runs a single process so Ctrl+C reaches the session (`npm run` doesn't wait) |
@@ -111,7 +122,7 @@ To test the full speech path without speaking, stream a recording: `./shchn live
 
 ```bash
 npm test            # unit tests, no API calls
-npm run typecheck   # also checks that src/core uses nothing from Node
+npm run typecheck   # also checks that src/core uses nothing from Node, and the web app
 ```
 
 ## Contributing

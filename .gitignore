@@ -7,3 +7,4 @@ out/
 /model.transcript.txt
 /model.audio.wav
 .build/
+dist/
