@@ -11,7 +11,15 @@
     "shchn": "node --import tsx src/cli.ts",
     "set-key": "bash scripts/set-key.sh",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "debug:audio": "node --import tsx tools/audio-analyze.ts",
+    "debug:stt": "node --import tsx tools/stt-timing.ts",
+    "debug:stt-check": "node --import tsx tools/stt-check.ts",
+    "debug:capture": "node --import tsx tools/capture-rate.ts",
+    "debug:ffmpeg-variants": "node --import tsx tools/ffmpeg-variants.ts",
+    "debug:session": "node --import tsx tools/session-report.ts",
+    "debug:tts": "node --import tsx tools/tts-clip.ts",
+    "debug:keys": "python3 tools/pty-keys.py"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

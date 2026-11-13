@@ -10,9 +10,7 @@ import { captureAudio } from "./input/audio";
 import { AudioClock } from "./input/audioClock";
 import { PauseDetector } from "./input/pauses";
 import { replay } from "./input/replay";
-import { DeepgramStt } from "./input/stt/deepgram";
-import { SonioxStt } from "./input/stt/soniox";
-import type { SttProvider } from "./input/stt/types";
+import { createSttProvider } from "./input/stt";
 import { ModelStore } from "./model/store";
 import { parseModelYaml, toYaml } from "./model/yaml";
 import { CoalescedWriter, JsonlLog, writeAtomic } from "./output/files";
@@ -256,13 +254,6 @@ function isDigitalSilence(frame: Buffer): boolean {
   return true;
 }
 
-function sttProvider(name: SessionConfig["stt"]): SttProvider {
-  const variable = name === "deepgram" ? "DEEPGRAM_API_KEY" : "SONIOX_API_KEY";
-  const key = process.env[variable];
-  if (!key) throw new Error(`${variable} isn't set. Add it to .env (see .env.example).`);
-  return name === "deepgram" ? new DeepgramStt(key) : new SonioxStt(key);
-}
-
 /** Errors that will repeat on every call: stop instead of retrying forever. */
 function isFatal(error: unknown): boolean {
   if (error instanceof Anthropic.APIConnectionError || error instanceof Anthropic.RateLimitError) return false;
@@ -417,7 +408,7 @@ export async function runSession(config: SessionConfig): Promise<number> {
         return;
       }
       case "live": {
-        const provider = sttProvider(config.stt);
+        const provider = createSttProvider(config.stt);
         const microphone = !config.audio && process.stdin.isTTY;
         // With a microphone, start only when the speaker is ready.
         if (microphone && !(await waitForEnter(stop.signal, reporter, "Press Enter to start listening (Ctrl+C to quit)"))) return;

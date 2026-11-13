@@ -20,7 +20,7 @@ A property with `ref` is a relation to another entity, like a foreign key; `many
 
 ## Setup
 
-Needs Node 22+, and ffmpeg for live mode (macOS: `brew install ffmpeg`). On macOS the microphone is read by a small Swift helper (`native/mic-capture.swift`, built on first use with the Xcode command line tools), because ffmpeg's macOS capture loses about 6% of the audio and drifts behind. Use `./shchn mic` to check levels and pick `--channel` on a multi-input interface, and keep the interface at 48 kHz: at 192 kHz capture breaks.
+Needs Node 22+, and ffmpeg for live mode (macOS: `brew install ffmpeg`). On macOS the microphone is read by a small Swift helper (`native/mic-capture.swift`, built on first use with the Xcode command line tools), because ffmpeg's macOS capture loses about 6% of the audio and drifts behind. Use `./shchn mic` to check levels and pick `--channel` on a multi-input interface, and keep the interface at 48 kHz: at 192 kHz capture breaks. If live mode misbehaves, see [docs/debugging.md](docs/debugging.md).
 
 ```bash
 npm install
@@ -103,8 +103,14 @@ To test the full speech path without speaking, stream a recording: `./shchn live
 | `scripts/` | `set-key.sh`, behind `npm run set-key` |
 | `shchn` | The launcher: runs a single process so Ctrl+C reaches the session (`npm run` doesn't wait) |
 | `examples/` | Two transcripts (English; Russian with English terms) with expected models |
+| `tools/` | Debugging tools (`npm run debug:…`): mic speed, speech-to-text timing, recordings, session reports |
+| `docs/` | [Development](docs/development.md) and [debugging](docs/debugging.md) guides |
 
 ```bash
 npm test            # unit tests, no API calls
 npm run typecheck
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). [docs/development.md](docs/development.md) covers setup, the code layout and how to measure a change; [docs/debugging.md](docs/debugging.md) covers the tools and the problems they've already caught (no audio, late updates, wrong transcripts, Ctrl+C).

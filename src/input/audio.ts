@@ -14,6 +14,8 @@ export interface AudioOptions {
   sampleRate: number;
   /** Use one input channel (1-based) instead of mixing them all, e.g. the mic input of an audio interface. */
   channel?: number;
+  /** "auto" picks the native helper for the default macOS mic; "ffmpeg" forces ffmpeg (for comparisons). */
+  backend?: "auto" | "ffmpeg";
 }
 
 export interface AudioCapture {
@@ -55,7 +57,8 @@ export function macMicrophoneHelper(): string | undefined {
 }
 
 function captureCommand(options: AudioOptions): [string, string[]] {
-  const helper = process.platform === "darwin" && !options.file && !options.device ? macMicrophoneHelper() : undefined;
+  const native = process.platform === "darwin" && !options.file && !options.device && options.backend !== "ffmpeg";
+  const helper = native ? macMicrophoneHelper() : undefined;
   if (helper) return [helper, [String(options.sampleRate), String(options.channel ?? 0)]];
   const input = options.file ? ["-re", "-i", options.file] : microphoneInput(options.device);
   return [
