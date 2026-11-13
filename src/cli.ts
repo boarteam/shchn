@@ -14,7 +14,7 @@ Usage:
   ./shchn live                    listen to the microphone through cloud speech-to-text
   ./shchn stdin                   read text from stdin as it arrives
   ./shchn score <actual.yaml> <expected.yaml>
-  ./shchn mic                              check your microphone's level, channel by channel
+  ./shchn mic                     check your microphone's level, channel by channel
 
 Output:
   -o, --out <file>         YAML model, rewritten on every change (default: model.yaml)
@@ -44,10 +44,12 @@ Live:
       --pause-after <s>    turn the microphone off after this much silence until you
                            press Enter (default: 20; 0 = never)
       --channel <n>        use one input channel of an audio interface (see ./shchn mic)
-      --device <name>      microphone (macOS: "default" or an index from
-                           ffmpeg -f avfoundation -list_devices true -i "")
+      --device <name>      a microphone other than the system default (macOS: an index from
+                           ffmpeg -f avfoundation -list_devices true -i ""). Uses ffmpeg, which
+                           on macOS loses ~6% of the audio; prefer changing the default input
 
-Keys go in .env: ANTHROPIC_API_KEY, plus SONIOX_API_KEY or DEEPGRAM_API_KEY for live.`;
+Keys go in .env: ANTHROPIC_API_KEY, plus SONIOX_API_KEY or DEEPGRAM_API_KEY for live.
+npm run set-key [-- NAME] writes one there with hidden input.`;
 
 const EFFORTS: readonly Effort[] = ["low", "medium", "high", "xhigh", "max"];
 

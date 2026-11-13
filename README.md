@@ -27,7 +27,7 @@ npm install
 cp .env.example .env
 ```
 
-Then fill in `.env`: `ANTHROPIC_API_KEY`, plus `SONIOX_API_KEY` (default) or `DEEPGRAM_API_KEY` for live speech. On macOS the terminal app asks for microphone access the first time.
+Then fill in `.env`: `ANTHROPIC_API_KEY`, plus `SONIOX_API_KEY` (default) or `DEEPGRAM_API_KEY` for live speech. `npm run set-key` (or `npm run set-key -- SONIOX_API_KEY`) asks for a key with hidden input and writes it to `.env`, keeping it out of shell history; for the Anthropic key it also checks that the key works. On macOS the terminal app asks for microphone access the first time.
 
 ## Usage
 
@@ -50,6 +50,7 @@ Every session writes:
 - `model.yaml`, rewritten on each change (atomically, so editors and `watch cat model.yaml` never see half a file).
 - `model.ops.jsonl`, every edit with the text it came from and the timing of each call.
 - `model.transcript.txt` for `live` and `stdin` sessions, so a real session can be replayed later with other settings.
+- `model.audio.wav` for `live` sessions run with `--save-audio`, to replay the exact audio with `live --audio`.
 
 Live mode with a microphone waits for Enter before it starts listening. After 20 seconds without recognized speech it turns the microphone off and pauses until you press Enter again, in case someone walks away and leaves it running (`--pause-after <seconds>`, `0` turns this off). `--resume` continues from an existing `model.yaml`. `./shchn --help` lists every option.
 
@@ -65,7 +66,7 @@ replay / stdin / files ┴─► engine ─► Claude ─► edits ─► model 
 
 - **Edits, not regeneration.** Claude never rewrites the YAML. Each call returns a short list of edits (`upsert_property`, `rename_entity`, `merge_entities`, …) that the code checks and applies. Output stays a few dozen tokens however big the model gets, and the YAML only changes where something changed.
 - **Each call gets the current model, the last ~1,500 characters of text and the new text.** The model itself is the memory, so calls stay small and every call sees the exact current state. The response is a JSON schema-constrained stream; each edit is applied the moment its closing brace arrives.
-- **One call at a time, nothing queues.** Complete sentences are sent as soon as they end; after a pause (reported by speech-to-text) the rest goes too. Text that arrives during a call goes out together with the next one, so a slow call never builds up a backlog.
+- **One call at a time, nothing queues.** Complete sentences are sent as soon as they end; after a pause (reported by speech-to-text) the rest goes too. Fragments shorter than three meaningful words wait for the next phrase, filler alone ("э-э", "um") is never sent, and 1.5 s of quiet sends whatever is left. Text that arrives during a call goes out together with the next one, so a slow call never builds up a backlog.
 - **A review pass** reads the whole transcript every 45 seconds of live input, and once at the end. It merges duplicates, fixes relations and catches what the fast calls missed. Its edits are applied between calls, never in the middle of one.
 - **Pauses release the text.** During continuous speech Soniox holds back confirmed text for about 4.7 s. shchn spots short pauses (~200 ms) in the audio and asks it to confirm what it heard, which cuts that to about 0.2 s.
 - **Speech-to-text** streams over WebSocket. Soniox (`stt-rt-v6`) is the default because it handles Russian with English terms mid-sentence; Deepgram Nova-3 (`--stt deepgram`) is the alternative. Both use the standard WebSocket API, so the same adapters can later run in a browser.
@@ -95,9 +96,12 @@ To test the full speech path without speaking, stream a recording: `./shchn live
 | `src/model/` | The model store, edit operations, name normalization, YAML in and out |
 | `src/extract/` | System prompt, the streaming Claude call, the incremental JSON reader, per-model settings |
 | `src/engine/` | Batching, scheduling and the review pass |
-| `src/input/` | Transcript replay, ffmpeg audio capture, Soniox and Deepgram adapters |
-| `src/output/` | File writers and the terminal view |
+| `src/input/` | Audio capture, pause detection, the mic check, transcript replay, Soniox and Deepgram adapters |
+| `src/output/` | File writers, the WAV recorder and the terminal view |
 | `src/eval/` | Scoring against an expected model |
+| `native/` | The macOS microphone helper, compiled on first use |
+| `scripts/` | `set-key.sh`, behind `npm run set-key` |
+| `shchn` | The launcher: runs a single process so Ctrl+C reaches the session (`npm run` doesn't wait) |
 | `examples/` | Two transcripts (English; Russian with English terms) with expected models |
 
 ```bash
