@@ -1,0 +1,9 @@
+node_modules/
+.env
+out/
+*.ops.jsonl
+# Default session outputs in the project root
+/model.yaml
+/model.transcript.txt
+/model.audio.wav
+.build/

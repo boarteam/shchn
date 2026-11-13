@@ -1,0 +1,45 @@
+# Hand-written reference for shop.en.txt, used by `replay --expect`.
+# Relations are scored as links (Order → Client), whatever the property is called.
+entities:
+  Client:
+    properties:
+      name: {}
+      email: {}
+      addresses: { ref: Address, many: true }
+      orders: { ref: Order, many: true }
+  Address:
+    properties:
+      street: {}
+      city: {}
+      zip_code: {}
+      country: {}
+  Product:
+    properties:
+      title: {}
+      description: {}
+      price: {}
+      sku: {}
+      category: { ref: Category }
+  Category:
+    properties:
+      name: {}
+      parent: { ref: Category }
+  Order:
+    properties:
+      client: { ref: Client }
+      status: {}
+      created_at: {}
+      total: {}
+      items: { ref: OrderItem, many: true }
+      shipping_address: { ref: Address }
+  OrderItem:
+    properties:
+      product: { ref: Product }
+      quantity: {}
+      price: {}
+  Review:
+    properties:
+      client: { ref: Client }
+      product: { ref: Product }
+      rating: {}
+      comment: {}

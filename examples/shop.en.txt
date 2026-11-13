@@ -1,0 +1,9 @@
+Okay, so let's sketch the data model for a small online shop. We have customers. A customer has a name, an email and a phone number. Each customer can have several addresses, and an address is just street, city, zip code and country.
+
+Then there are products. A product has a title, a description, a price and a SKU. Every product belongs to a category, and categories have a name and, um, an optional parent category, so they can be nested.
+
+Now orders. A customer places orders, and each order belongs to one customer. The order has a status, a creation date and a total. An order consists of order items. Each order item points to a product and has a quantity and a price, because the product price can change later.
+
+Hmm, actually, let's drop the phone number, we won't need it. And let's rename customers to clients, that's what the business calls them.
+
+Oh, and every order is shipped to one of the client's addresses, so the order needs a shipping address. Last thing, reviews: a review is written by a client about a product, with a rating and a comment.

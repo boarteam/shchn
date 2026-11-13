@@ -1,0 +1,26 @@
+{
+  "name": "shchn",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Turns live speech, requirements or code into a continuously updated YAML model of entities, properties and relations.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "shchn": "node --import tsx src/cli.ts",
+    "set-key": "bash scripts/set-key.sh",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

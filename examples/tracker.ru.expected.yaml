@@ -1,0 +1,37 @@
+# Hand-written reference for tracker.ru.txt, used by `replay --expect`.
+entities:
+  Project:
+    properties:
+      name: {}
+      description: {}
+      owner: { ref: User }
+  User:
+    properties:
+      email: {}
+      name: {}
+      avatar_url: {}
+      workspaces: { ref: Workspace, many: true }
+  Workspace:
+    properties:
+      name: {}
+      members: { ref: User, many: true }
+  Task:
+    properties:
+      project: { ref: Project }
+      title: {}
+      description: {}
+      status: {}
+      assignee: { ref: User }
+      reporter: { ref: User }
+      labels: { ref: Label, many: true }
+      due_date: {}
+  Comment:
+    properties:
+      task: { ref: Task }
+      author: { ref: User }
+      text: {}
+      created_at: {}
+  Label:
+    properties:
+      name: {}
+      color: {}
