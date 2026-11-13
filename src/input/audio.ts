@@ -44,7 +44,7 @@ const HELPER_BINARY = fileURLToPath(new URL("../../.build/mic-capture", import.m
  * ffmpeg's avfoundation input loses ~6% of the audio, so a live session would fall
  * further behind the longer it runs. Returns undefined if it can't be built.
  */
-function macMicrophoneHelper(): string | undefined {
+export function macMicrophoneHelper(): string | undefined {
   if (existsSync(HELPER_BINARY) && statSync(HELPER_BINARY).mtimeMs >= statSync(HELPER_SOURCE).mtimeMs) return HELPER_BINARY;
   process.stderr.write("Building the microphone helper (first run only)…\n");
   mkdirSync(fileURLToPath(new URL("../../.build/", import.meta.url)), { recursive: true });

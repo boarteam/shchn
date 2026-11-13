@@ -1,15 +1,19 @@
-// Captures the default macOS input with AVAudioEngine and writes 16-bit mono PCM
-// to stdout. Used instead of ffmpeg's avfoundation input, which loses ~6% of the
+// Captures the default macOS input with AVAudioEngine and writes 16-bit PCM
+// (one channel, or all of them) to stdout. Used instead of ffmpeg's avfoundation input, which loses ~6% of the
 // audio and so falls further behind real time the longer a session runs.
 //
-// Usage: mic-capture <sampleRate> <channel>   (channel is 1-based; 0 mixes all)
+// Usage: mic-capture <sampleRate> <channel>
+//   channel: 1-based input channel, 0 to mix all of them into one, or "all" to
+//   keep every channel (interleaved; used by `shchn mic` to compare inputs).
+// Prints the device format to stderr first: "format: 48000 Hz, 2 channels".
 
 import AVFoundation
 import Foundation
 
 let arguments = CommandLine.arguments
 let sampleRate = Double(arguments.count > 1 ? arguments[1] : "16000") ?? 16000
-let channel = Int(arguments.count > 2 ? arguments[2] : "0") ?? 0
+let keepAll = arguments.count > 2 && arguments[2] == "all"
+let channel = keepAll ? 0 : Int(arguments.count > 2 ? arguments[2] : "0") ?? 0
 
 func fail(_ message: String) -> Never {
   FileHandle.standardError.write((message + "\n").data(using: .utf8)!)
@@ -25,24 +29,31 @@ if deviceFormat.sampleRate == 0 || deviceFormat.channelCount == 0 {
 let channels = Int(deviceFormat.channelCount)
 if channel > channels { fail("The input has \(channels) channel(s); --channel \(channel) doesn't exist.") }
 
-let monoFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: deviceFormat.sampleRate, channels: 1, interleaved: false)!
-let outputFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: sampleRate, channels: 1, interleaved: true)!
-guard let converter = AVAudioConverter(from: monoFormat, to: outputFormat) else { fail("Can't convert the input format.") }
+FileHandle.standardError.write("format: \(Int(deviceFormat.sampleRate)) Hz, \(channels) channels\n".data(using: .utf8)!)
+
+let outputChannels = keepAll ? AVAudioChannelCount(channels) : 1
+let sourceFormat = keepAll
+  ? AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: deviceFormat.sampleRate, channels: outputChannels, interleaved: false)!
+  : AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: deviceFormat.sampleRate, channels: 1, interleaved: false)!
+let outputFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: sampleRate, channels: outputChannels, interleaved: true)!
+guard let converter = AVAudioConverter(from: sourceFormat, to: outputFormat) else { fail("Can't convert the input format.") }
 let stdout = FileHandle.standardOutput
 
 input.installTap(onBus: 0, bufferSize: 4096, format: deviceFormat) { buffer, _ in
   let frames = Int(buffer.frameLength)
   guard frames > 0, let source = buffer.floatChannelData,
-        let mono = AVAudioPCMBuffer(pcmFormat: monoFormat, frameCapacity: AVAudioFrameCount(frames)) else { return }
+        let mono = AVAudioPCMBuffer(pcmFormat: sourceFormat, frameCapacity: AVAudioFrameCount(frames)) else { return }
   mono.frameLength = AVAudioFrameCount(frames)
-  let target = mono.floatChannelData![0]
+  let target = mono.floatChannelData!
   for i in 0..<frames {
-    if channel >= 1 {
-      target[i] = source[channel - 1][i]
+    if keepAll {
+      for c in 0..<channels { target[c][i] = source[c][i] }
+    } else if channel >= 1 {
+      target[0][i] = source[channel - 1][i]
     } else {
       var sum: Float = 0
       for c in 0..<channels { sum += source[c][i] }
-      target[i] = sum / Float(channels)
+      target[0][i] = sum / Float(channels)
     }
   }
   let capacity = AVAudioFrameCount(Double(frames) * sampleRate / deviceFormat.sampleRate) + 32
@@ -59,7 +70,7 @@ input.installTap(onBus: 0, bufferSize: 4096, format: deviceFormat) { buffer, _ i
     return mono
   }
   if converted.frameLength > 0, let samples = converted.int16ChannelData {
-    stdout.write(Data(bytes: samples[0], count: Int(converted.frameLength) * 2))
+    stdout.write(Data(bytes: samples[0], count: Int(converted.frameLength) * 2 * Int(outputChannels)))
   }
 }
 

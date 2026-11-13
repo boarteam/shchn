@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { microphoneInput } from "./audio";
+import { macMicrophoneHelper, microphoneInput } from "./audio";
 import { WavWriter } from "../output/wav";
 
 // `shchn mic`: records a few seconds while you speak and reports what arrives:
@@ -20,23 +20,31 @@ function meter(db: number, width = 24): string {
 }
 
 interface Recording {
-  /** Interleaved 16 kHz, 16-bit, two channels. */
+  /** Interleaved 16 kHz, 16-bit samples, `channels` of them per frame. */
   audio: Buffer;
+  channels: number;
   /** Wall-clock time between the first and last audio arriving. */
   wallSeconds: number;
   inputFormat?: string;
 }
 
-/** Records for `seconds` of wall-clock time, so a wrong-speed input shows up as a mismatch. */
+/**
+ * Records for `seconds` of wall-clock time, so a wrong-speed input shows up as a
+ * mismatch. Uses the same capture path as live mode: the native helper for the
+ * default macOS input, ffmpeg (two channels) otherwise.
+ */
 function record(device: string | undefined, seconds: number): Promise<Recording> {
+  const helper = process.platform === "darwin" && !device ? macMicrophoneHelper() : undefined;
+  const [command, args] = helper
+    ? [helper, [String(SAMPLE_RATE), "all"]]
+    : [
+        "ffmpeg",
+        ["-hide_banner", "-loglevel", "info", "-nostdin", ...microphoneInput(device)].concat(
+          ["-ac", "2", "-ar", String(SAMPLE_RATE), "-f", "s16le", "-acodec", "pcm_s16le", "pipe:1"],
+        ),
+      ];
   return new Promise((resolve, reject) => {
-    const ffmpeg = spawn(
-      "ffmpeg",
-      ["-hide_banner", "-loglevel", "info", "-nostdin", ...microphoneInput(device)].concat(
-        ["-ac", "2", "-ar", String(SAMPLE_RATE), "-f", "s16le", "-acodec", "pcm_s16le", "pipe:1"],
-      ),
-      { stdio: ["ignore", "pipe", "pipe"] },
-    );
+    const ffmpeg = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
     const chunks: Buffer[] = [];
     let stderr = "";
     let firstAt: number | undefined;
@@ -58,17 +66,19 @@ function record(device: string | undefined, seconds: number): Promise<Recording>
         reject(new Error("No audio arrived. Check microphone access for this terminal's app."));
         return;
       }
-      const inputFormat = /Stream #0:0[^:]*: Audio: (.+)/.exec(stderr)?.[1]?.trim();
-      resolve({ audio, wallSeconds: (lastAt - firstAt) / 1000, inputFormat });
+      const helperFormat = /format: (\d+ Hz, (\d+) channels)/.exec(stderr);
+      const inputFormat = helperFormat?.[1] ?? /Stream #0:0[^:]*: Audio: (.+)/.exec(stderr)?.[1]?.trim();
+      const channels = helperFormat ? Number(helperFormat[2]) : 2;
+      resolve({ audio, channels, wallSeconds: (lastAt - firstAt) / 1000, inputFormat });
     });
   });
 }
 
-function channelStats(audio: Buffer, channel: number): { peak: number; rms: number } {
+function channelStats(audio: Buffer, channel: number, channels: number): { peak: number; rms: number } {
   let peak = 0;
   let sum = 0;
   let count = 0;
-  for (let i = channel * 2; i + 1 < audio.length; i += 4) {
+  for (let i = channel * 2; i + 1 < audio.length; i += channels * 2) {
     const v = audio.readInt16LE(i);
     peak = Math.max(peak, Math.abs(v));
     sum += v * v;
@@ -77,9 +87,9 @@ function channelStats(audio: Buffer, channel: number): { peak: number; rms: numb
   return { peak: decibels(peak), rms: decibels(Math.sqrt(sum / Math.max(count, 1))) };
 }
 
-function saveChannel(audio: Buffer, channel: number, path: string): void {
-  const mono = Buffer.alloc(audio.length / 2);
-  for (let i = channel * 2, o = 0; i + 1 < audio.length; i += 4, o += 2) mono.writeInt16LE(audio.readInt16LE(i), o);
+function saveChannel(audio: Buffer, channel: number, channels: number, path: string): void {
+  const mono = Buffer.alloc(Math.floor(audio.length / channels));
+  for (let i = channel * 2, o = 0; i + 1 < audio.length; i += channels * 2, o += 2) mono.writeInt16LE(audio.readInt16LE(i), o);
   const wav = new WavWriter(path, SAMPLE_RATE);
   wav.write(mono);
   wav.close();
@@ -94,9 +104,10 @@ export async function micCheck(device: string | undefined, seconds = 8): Promise
     prompt.close();
   }
   process.stdout.write(`Recording ${seconds} s. Count now…\n`);
-  const { audio, wallSeconds, inputFormat } = await record(device, seconds);
-  const audioSeconds = audio.length / (SAMPLE_RATE * 2 * 2);
-  const channels = [0, 1].map((c) => channelStats(audio, c));
+  const recording = await record(device, seconds);
+  const { audio, wallSeconds, inputFormat } = recording;
+  const audioSeconds = audio.length / (SAMPLE_RATE * 2 * recording.channels);
+  const channels = Array.from({ length: recording.channels }, (_, c) => channelStats(audio, c, recording.channels));
 
   process.stdout.write(`  input format: ${inputFormat ?? "unknown"}\n`);
   process.stdout.write(`  received ${audioSeconds.toFixed(1)} s of audio in ${wallSeconds.toFixed(1)} s\n`);
@@ -105,9 +116,9 @@ export async function micCheck(device: string | undefined, seconds = 8): Promise
       `  channel ${i + 1}  peak ${peak.toFixed(0).padStart(4)} dBFS   level ${rms.toFixed(0).padStart(4)} dBFS   ${meter(peak)}\n`,
     );
   });
-  const loudest = channels[0] && channels[1] && channels[1].peak > channels[0].peak ? 1 : 0;
+  const loudest = channels.reduce((best, c, i) => (c.peak > (channels[best]?.peak ?? -Infinity) ? i : best), 0);
   const saved = "out/mic-check.wav";
-  saveChannel(audio, loudest, saved);
+  saveChannel(audio, loudest, recording.channels, saved);
   process.stdout.write(`  channel ${loudest + 1} saved to ${saved}\n`);
 
   const speed = audioSeconds / Math.max(wallSeconds, 0.1);
@@ -117,16 +128,23 @@ export async function micCheck(device: string | undefined, seconds = 8): Promise
     advice =
       `Audio arrives at ${speed.toFixed(2)}x real time, so speech is distorted. Set the input to 48 kHz ` +
       "(Audio MIDI Setup → your interface → Format) and run this check again.";
+  } else if (channels.every((c) => c.peak <= -96)) {
+    advice =
+      "Only exact digital silence arrived: macOS is blocking the microphone for this terminal's app, or the input is muted. " +
+      "Allow it in System Settings → Privacy & Security → Microphone, then run this again.";
   } else if (voiced.length === 0) {
     advice =
       `Too quiet: nothing peaked above ${SPEECH_DB} dBFS. Turn up the gain on your mic's input ` +
       "(on the Scarlett: until the gain ring glows green when you speak), or pick another --device.";
   } else if (voiced.some((c) => c.peak > CLIP_DB)) {
     advice = "Clipping: your voice hits the maximum level. Turn the gain down a little.";
-  } else if (voiced.length === 1) {
+  } else if (voiced.length === 1 && channels.length > 1) {
     advice = `Your voice is only on channel ${voiced[0]?.n}. Use: ./shchn live --view --channel ${voiced[0]?.n}`;
   } else {
-    advice = "Speed and levels look fine: ./shchn live --view";
+    advice =
+      channels.length === 1
+        ? "Speed and levels look fine: ./shchn live --view"
+        : "Your voice is on several channels: ./shchn live --view mixes them, or pick one with --channel";
   }
   process.stdout.write(`${advice}\n`);
   return 0;
