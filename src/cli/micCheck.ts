@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { macMicrophoneHelper, microphoneInput } from "./audio";
-import { WavWriter } from "../output/wav";
+import { WavWriter } from "./wav";
 
 // `shchn mic`: records a few seconds while you speak and reports what arrives:
 // the input format ffmpeg sees, whether audio arrives at real-time speed, and

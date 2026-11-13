@@ -1,10 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { formatScore, scoreModel } from "./eval/score";
-import { DEFAULT_MODEL, type Effort, type ThinkingMode } from "./extract/models";
-import { micCheck } from "./input/micCheck";
-import { parseModelYaml } from "./model/yaml";
-import { type Command, runSession, sideLogPath } from "./session";
+import { formatScore, scoreModel } from "../core/eval/score";
+import { DEFAULT_MODEL, type Effort, type ThinkingMode } from "../core/extract/models";
+import { parseModelYaml } from "../core/model/yaml";
+import { micCheck } from "./micCheck";
+import { type Command, runCommand, sideLogPath } from "./session";
 
 const USAGE = `shchn: turns speech, requirements or code into a live YAML model of entities and relations
 
@@ -131,7 +131,7 @@ async function main(): Promise<number> {
     if (!existsSync(path)) fail(`no such file: ${path}`);
   }
 
-  return runSession({
+  return runCommand({
     command: command as Command,
     inputs: args,
     out: values.out,

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { scoreModel } from "../src/eval/score";
-import { deepgramUrl, handleDeepgramMessage } from "../src/input/stt/deepgram";
-import { handleSonioxMessage, sonioxConfig } from "../src/input/stt/soniox";
-import type { SttEvents } from "../src/input/stt/types";
-import { parseModelYaml } from "../src/model/yaml";
+import { scoreModel } from "../src/core/eval/score";
+import { deepgramUrl, handleDeepgramMessage } from "../src/core/input/stt/deepgram";
+import { handleSonioxMessage, sonioxConfig } from "../src/core/input/stt/soniox";
+import type { SttEvents } from "../src/core/input/stt/types";
+import { parseModelYaml } from "../src/core/model/yaml";
 
 function recorder() {
   const events: string[] = [];

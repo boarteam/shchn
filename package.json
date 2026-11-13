@@ -8,10 +8,10 @@
     "node": ">=22"
   },
   "scripts": {
-    "shchn": "node --import tsx src/cli.ts",
+    "shchn": "node --import tsx src/cli/cli.ts",
     "set-key": "bash scripts/set-key.sh",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/core",
     "debug:audio": "node --import tsx tools/audio-analyze.ts",
     "debug:stt": "node --import tsx tools/stt-timing.ts",
     "debug:stt-check": "node --import tsx tools/stt-check.ts",

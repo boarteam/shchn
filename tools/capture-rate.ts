@@ -10,7 +10,7 @@
 
 import { parseArgs } from "node:util";
 import "./lib/cli"; // quiet EPIPE when piped
-import { captureAudio } from "../src/input/audio";
+import { captureAudio } from "../src/cli/audio";
 
 const { values } = parseArgs({
   options: {

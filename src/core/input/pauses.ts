@@ -15,7 +15,7 @@ export class PauseDetector {
   private noiseFloor = 0;
   private speechMs = 0;
   private silenceMs = 0;
-  private remainder = Buffer.alloc(0);
+  private remainder = new Uint8Array(0);
   private readonly windowBytes: number;
 
   constructor(
@@ -27,19 +27,25 @@ export class PauseDetector {
     this.windowBytes = ((sampleRate * WINDOW_MS) / 1000) * 2;
   }
 
-  push(frame: Buffer): void {
-    let data = this.remainder.length > 0 ? Buffer.concat([this.remainder, frame]) : frame;
+  push(frame: Uint8Array): void {
+    let data = frame;
+    if (this.remainder.length > 0) {
+      data = new Uint8Array(this.remainder.length + frame.length);
+      data.set(this.remainder);
+      data.set(frame, this.remainder.length);
+    }
     while (data.length >= this.windowBytes) {
       this.analyse(data.subarray(0, this.windowBytes));
       data = data.subarray(this.windowBytes);
     }
-    this.remainder = Buffer.from(data);
+    this.remainder = new Uint8Array(data); // a copy: the caller may reuse its buffer
   }
 
-  private analyse(window: Buffer): void {
+  private analyse(window: Uint8Array): void {
+    const samples = new DataView(window.buffer, window.byteOffset, window.byteLength);
     let sum = 0;
     for (let i = 0; i + 1 < window.length; i += 2) {
-      const sample = window.readInt16LE(i);
+      const sample = samples.getInt16(i, true);
       sum += sample * sample;
     }
     const rms = Math.sqrt(sum / (window.length / 2));

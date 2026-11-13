@@ -119,7 +119,7 @@ Runs a command in a 120×40 pseudo-terminal and presses keys at the given times.
 
 **Cause:** during continuous speech Soniox confirms text only about 4.7 s behind the audio, and shchn waits for confirmed text. Text arrived within 0.11 s when the stream ended.
 
-**Found with:** `debug:stt --no-finalize` showed lags of about 4.7 s for every piece. **Fix:** a pause detector ([`src/input/pauses.ts`](../src/input/pauses.ts)) asks Soniox to finalize at short pauses (at most every 2 s, as Soniox advises), which brings confirmed text to 0.1–0.3 s. `debug:audio` then showed that synthetic speech pauses only 180–260 ms between sentences, which set the threshold at 200 ms rather than 250.
+**Found with:** `debug:stt --no-finalize` showed lags of about 4.7 s for every piece. **Fix:** a pause detector ([`src/core/input/pauses.ts`](../src/core/input/pauses.ts)) asks Soniox to finalize at short pauses (at most every 2 s, as Soniox advises), which brings confirmed text to 0.1–0.3 s. `debug:audio` then showed that synthetic speech pauses only 180–260 ms between sentences, which set the threshold at 200 ms rather than 250.
 
 ### 4. The transcript is an unrelated phrase
 

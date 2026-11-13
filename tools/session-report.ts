@@ -10,7 +10,7 @@
 
 import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { estimateCostUsd } from "../src/extract/models";
+import { estimateCostUsd } from "../src/core/extract/models";
 import { percentile } from "./lib/audioStats";
 import { fail } from "./lib/cli";
 

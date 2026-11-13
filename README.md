@@ -91,14 +91,17 @@ To test the full speech path without speaking, stream a recording: `./shchn live
 
 ## Layout
 
+`src/core/` runs anywhere: in Node, in a browser and in a Web Worker (the coming web version shares it). `src/cli/` adds everything that needs Node.
+
 | Path | What's there |
 |---|---|
-| `src/model/` | The model store, edit operations, name normalization, YAML in and out |
-| `src/extract/` | System prompt, the streaming Claude call, the incremental JSON reader, per-model settings |
-| `src/engine/` | Batching, scheduling and the review pass |
-| `src/input/` | Audio capture, pause detection, the mic check, transcript replay, Soniox and Deepgram adapters |
-| `src/output/` | File writers, the WAV recorder and the terminal view |
-| `src/eval/` | Scoring against an expected model |
+| `src/core/model/` | The model store, edit operations, name normalization, YAML in and out |
+| `src/core/extract/` | System prompt, the streaming Claude call, the incremental JSON reader, per-model settings |
+| `src/core/engine/` | Batching, scheduling and the review pass |
+| `src/core/input/` | Pause detection, transcript replay, the audio clock, Soniox and Deepgram adapters |
+| `src/core/eval/` | Scoring against an expected model |
+| `src/core/session.ts` | One session from input to model, with the platform's parts passed in |
+| `src/cli/` | The command line: options, audio capture, the mic check, file writers, the WAV recorder, the terminal view |
 | `native/` | The macOS microphone helper, compiled on first use |
 | `scripts/` | `set-key.sh`, behind `npm run set-key` |
 | `shchn` | The launcher: runs a single process so Ctrl+C reaches the session (`npm run` doesn't wait) |
@@ -108,7 +111,7 @@ To test the full speech path without speaking, stream a recording: `./shchn live
 
 ```bash
 npm test            # unit tests, no API calls
-npm run typecheck
+npm run typecheck   # also checks that src/core uses nothing from Node
 ```
 
 ## Contributing

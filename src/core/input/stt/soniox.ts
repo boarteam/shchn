@@ -1,3 +1,4 @@
+import { unref } from "../../timers";
 import { type SttEvents, type SttOptions, type SttProvider, type SttSession, waitOrTimeout } from "./types";
 
 // Soniox real-time API: https://docs.soniox.com/stt/api-reference/websocket-api
@@ -91,7 +92,7 @@ export class SonioxStt implements SttProvider {
         socket.send(JSON.stringify({ type: "keepalive" }));
       }
     }, 5000);
-    keepalive.unref?.();
+    unref(keepalive);
 
     socket.onmessage = (event) => {
       if (typeof event.data !== "string") return;

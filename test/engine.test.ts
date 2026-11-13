@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { Engine, type EngineOptions } from "../src/engine/engine";
-import type { CallStats, OpsSource } from "../src/extract/claude";
-import type { Op } from "../src/model/ops";
-import { ModelStore } from "../src/model/store";
+import { Engine, type EngineOptions } from "../src/core/engine/engine";
+import type { CallStats, OpsSource } from "../src/core/extract/claude";
+import type { Op } from "../src/core/model/ops";
+import { ModelStore } from "../src/core/model/store";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

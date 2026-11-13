@@ -4,6 +4,7 @@ import { type InputKind, extractMessage, reviewMessage } from "../extract/prompt
 import type { Op } from "../model/ops";
 import type { ApplyResult, EntityResolver, ModelStore } from "../model/store";
 import { toYaml } from "../model/yaml";
+import { unref } from "../timers";
 import { chooseCut, lastWordBoundary } from "./cut";
 
 // The scheduler between input and the LLM. Text arrives in pieces; the engine
@@ -104,7 +105,7 @@ export class Engine {
   ) {
     if (options.review.enabled && options.kind === "speech") {
       this.reviewTimer = setInterval(() => this.maybeReview(), 1000);
-      this.reviewTimer.unref?.();
+      unref(this.reviewTimer);
     }
   }
 
@@ -123,7 +124,7 @@ export class Engine {
     if (this.options.idleFlushMs > 0) {
       clearTimeout(this.idleTimer);
       this.idleTimer = setTimeout(() => this.flushWholeWords(), this.options.idleFlushMs);
-      this.idleTimer.unref?.();
+      unref(this.idleTimer);
     }
     this.pump();
   }

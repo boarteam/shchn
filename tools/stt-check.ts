@@ -7,7 +7,8 @@
 // (a bad key, an exhausted balance). Costs a second of audio time.
 
 import { parseArgs } from "node:util";
-import { createSttProvider, type SttName } from "../src/input/stt";
+import { sttProviderFromEnv } from "../src/cli/keys";
+import type { SttName } from "../src/core/input/stt";
 import { fail, loadEnv } from "./lib/cli";
 
 const { values } = parseArgs({ options: { stt: { type: "string", default: "soniox" } } });
@@ -16,7 +17,7 @@ loadEnv();
 
 let problem: string | undefined;
 try {
-  const provider = createSttProvider(values.stt as SttName);
+  const provider = sttProviderFromEnv(values.stt as SttName);
   const session = await provider.connect(
     { sampleRate: 16_000, languages: ["en"], terms: [] },
     { partial() {}, final() {}, endpoint() {}, error: (e) => (problem ??= e.message) },

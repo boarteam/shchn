@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { chooseCut, lastSentenceEnd } from "../src/engine/cut";
-import { OpsStreamParser } from "../src/extract/opsStream";
-import { SYSTEM_PROMPT } from "../src/extract/prompt";
-import { parseOp } from "../src/model/ops";
-import { parseModelYaml, toYaml } from "../src/model/yaml";
+import { chooseCut, lastSentenceEnd } from "../src/core/engine/cut";
+import { OpsStreamParser } from "../src/core/extract/opsStream";
+import { SYSTEM_PROMPT } from "../src/core/extract/prompt";
+import { parseOp } from "../src/core/model/ops";
+import { parseModelYaml, toYaml } from "../src/core/model/yaml";
 
 describe("OpsStreamParser", () => {
   const json =

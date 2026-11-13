@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AudioClock } from "../src/input/audioClock";
+import { AudioClock } from "../src/core/input/audioClock";
 
 describe("AudioClock", () => {
   it("maps audio time to wall time across a pause", () => {

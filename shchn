@@ -3,4 +3,4 @@
 # cutting off a live session before it can finish; exec'ing node directly lets
 # the session handle Ctrl+C itself, process what was said and print its summary.
 here="$(cd "$(dirname "$0")" && pwd)"
-exec node --import "$here/node_modules/tsx/dist/loader.mjs" "$here/src/cli.ts" "$@"
+exec node --import "$here/node_modules/tsx/dist/loader.mjs" "$here/src/cli/cli.ts" "$@"

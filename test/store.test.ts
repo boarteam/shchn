@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { nameKey, toEntityName, toPropertyName } from "../src/model/names";
-import type { Op } from "../src/model/ops";
-import { ModelStore } from "../src/model/store";
-import { toYaml } from "../src/model/yaml";
+import { nameKey, toEntityName, toPropertyName } from "../src/core/model/names";
+import type { Op } from "../src/core/model/ops";
+import { ModelStore } from "../src/core/model/store";
+import { toYaml } from "../src/core/model/yaml";
 
 function prop(entity: string, property: string, ref: string | null = null, many = false): Op {
   return { op: "upsert_property", entity, property, ref, many };

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ModelStore } from "../src/model/store";
-import { toYaml } from "../src/model/yaml";
-import { TerminalView } from "../src/output/view";
+import { ModelStore } from "../src/core/model/store";
+import { toYaml } from "../src/core/model/yaml";
+import { TerminalView } from "../src/cli/view";
 
 /** A fake terminal that keeps the last frame, without escape codes. */
 function terminal(columns: number, rows: number) {

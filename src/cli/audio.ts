@@ -1,6 +1,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import type { AudioCapture } from "../core/session";
 
 // Captures audio with ffmpeg as 16-bit mono PCM, in 100 ms frames. With a file
 // it streams at real-time speed (-re), which makes live mode testable without
@@ -16,12 +17,6 @@ export interface AudioOptions {
   channel?: number;
   /** "auto" picks the native helper for the default macOS mic; "ffmpeg" forces ffmpeg (for comparisons). */
   backend?: "auto" | "ffmpeg";
-}
-
-export interface AudioCapture {
-  stop(): void;
-  /** Resolves when capture ends (end of file, or stop()). */
-  done: Promise<void>;
 }
 
 export function microphoneInput(device?: string): string[] {

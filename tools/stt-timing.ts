@@ -10,10 +10,11 @@
 // Costs speech-to-text time only (Soniox: $0.12/hour of audio). No Claude calls.
 
 import { parseArgs } from "node:util";
-import { AudioClock } from "../src/input/audioClock";
-import { captureAudio } from "../src/input/audio";
-import { PauseDetector } from "../src/input/pauses";
-import { createSttProvider, type SttName } from "../src/input/stt";
+import { captureAudio } from "../src/cli/audio";
+import { sttProviderFromEnv } from "../src/cli/keys";
+import { AudioClock } from "../src/core/input/audioClock";
+import { PauseDetector } from "../src/core/input/pauses";
+import type { SttName } from "../src/core/input/stt";
 import { fail, loadEnv } from "./lib/cli";
 import { percentile } from "./lib/audioStats";
 
@@ -39,7 +40,7 @@ const clock = new AudioClock();
 const lags: number[] = [];
 let lastPartial = "";
 
-const stt = await createSttProvider(values.stt as SttName).connect(
+const stt = await sttProviderFromEnv(values.stt as SttName).connect(
   { sampleRate: 16_000, languages: values.lang.split(","), terms: [] },
   {
     partial(text) {

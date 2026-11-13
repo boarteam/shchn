@@ -1,3 +1,4 @@
+import { unref } from "../../timers";
 import { type SttEvents, type SttOptions, type SttProvider, type SttSession, waitOrTimeout } from "./types";
 
 // Deepgram live API: https://developers.deepgram.com/reference/speech-to-text/listen-streaming
@@ -84,7 +85,7 @@ export class DeepgramStt implements SttProvider {
         socket.send(JSON.stringify({ type: "KeepAlive" }));
       }
     }, 3000);
-    keepalive.unref?.();
+    unref(keepalive);
 
     socket.onmessage = (event) => {
       if (typeof event.data !== "string") return;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PauseDetector } from "../src/input/pauses";
+import { PauseDetector } from "../src/core/input/pauses";
 
 const RATE = 16000;
 

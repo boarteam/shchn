@@ -1,0 +1,12 @@
+{
+  // Core runs in Node, in browser tabs and in Web Workers, so it's checked
+  // without Node's types: a node: import, Buffer or process here is an error.
+  // The DOM is left out too, so nothing here can rely on a page (window, document).
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "WebWorker"],
+    "types": [],
+    "paths": { "undici-types": ["./no-node-types.d.ts"] }
+  },
+  "include": ["."]
+}
